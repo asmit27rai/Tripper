@@ -62,3 +62,5 @@ const login = async (req, res) => {
 };
 
 module.exports = { home, register, login };
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njg1OGQ5NGI5OWQ3MDUxMzBiZjg2ZmYiLCJlbWFpbCI6InJhaWFzbWl0MTBAZ21haWwuY29tIiwiaWF0IjoxNzIwMTEyOTEzLCJleHAiOjE3MjI3MDQ5MTN9.11IpUIU2rs3RqvJlvXlkjKysiq2MrpvGTtPJ7YGKItM
