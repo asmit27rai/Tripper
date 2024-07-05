@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getPlacesData } from "../api/Inndex";
 
 const URL = "http://localhost:5000/api/auth/plan";
 
 export const Plan = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [hotelName, setHotelName] = useState("");
-  const [hotelPrice, setHotelPrice] = useState(null)
-  const [guideName, setGuideName] = useState("");
-  const [type, setType] = useState("");
-  const [whetherData, setWhetherData] = useState(null);
-  const [swlat, setSwlat] = useState(null);
-  const [swlng, setSwlng] = useState(null);
-  const [nelat, setNelat] = useState(null);
-  const [nelng, setNelng] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
+  const [hotelData, setHotelData] = useState(null);
+  const [restaurantData, setRestaurantData] = useState(null);
+  const [attractionData, setAttractionData] = useState(null);
+  const [type, setType] = useState("hotels");
 
   const handleFromChange = (e) => {
     setFrom(e.target.value);
@@ -23,40 +20,71 @@ export const Plan = () => {
     setTo(e.target.value);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSwlat(whetherData.location.lat - 0.1);
-    setSwlng(whetherData.location.lon - 0.1);
-    setNelat(whetherData.location.lat + 0.1);
-    setNelng(whetherData.location.lon + 0.1);
-    console.log(swlat,swlng,nelat,nelng);
+  const handleTypeChange = (e) => {
+    setType(e.target.value);
   };
 
-  const handleSubmitWhether = async (e) => {
+  const handleSubmitWeather = async (e) => {
     e.preventDefault();
 
     try {
       const response = await fetch(
-        `https://api.weatherapi.com/v1/current.json?key=${
-          import.meta.env.VITE_WHETHER_API
-        }&q=${to}`
+        `https://api.weatherapi.com/v1/current.json?key=${import.meta.env.VITE_WEATHER_API}&q=${to}`
       );
       if (!response.ok) {
-        throw new Error("Failed to fetch travel data");
+        throw new Error("Failed to fetch weather data");
       }
       const data = await response.json();
-      setWhetherData(data);
+      setWeatherData(data);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching weather data:", error);
     }
   };
+
+  const handleEnjoyJourneyClick = async () => {
+    if (!weatherData) return;
+
+    try {
+      const placesData = await getPlacesData(
+        type,
+        (weatherData.location.lat - 0.1).toFixed(2),
+        (weatherData.location.lat + 0.1).toFixed(2),
+        (weatherData.location.lon - 0.1).toFixed(2),
+        (weatherData.location.lon + 0.1).toFixed(2)
+      );
+      if (type === "hotels") {
+        setHotelData(placesData);
+      }
+      if (type === "restaurants") {
+        setRestaurantData(placesData);
+      }
+      if (type === "attractions") {
+        setAttractionData(placesData);
+      }
+    } catch (error) {
+      console.log("Error fetching places data:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (hotelData) console.log("Hotel Data:", hotelData);
+  }, [hotelData]);
+
+  useEffect(() => {
+    if (restaurantData) console.log("Restaurant Data:", restaurantData);
+  }, [restaurantData]);
+
+  useEffect(() => {
+    if (attractionData) console.log("Attraction Data:", attractionData);
+  }, [attractionData]);
+
   return (
     <div className="container">
       <div className="row justify-content-center mt-5">
         <div className="col-md-6">
           <div className="form-container bg-gradient border rounded p-4">
             <h1 className="text-center mb-4">Plan Your Journey</h1>
-            <form onSubmit={handleSubmit}>
+            <form>
               <div className="mb-3">
                 <label htmlFor="from" className="form-label">
                   From
@@ -83,41 +111,59 @@ export const Plan = () => {
               </div>
               <button
                 type="button"
+                onClick={handleSubmitWeather}
                 className="btn btn-success btn-block"
-                onClick={handleSubmitWhether}
               >
                 Weather
               </button>
-              {whetherData && (
-                <button
-                  type="submit"
-                  className="btn mx-2 btn-outline-primary btn-block"
-                >
-                  Enjoy Journey..
-                </button>
+              {weatherData && (
+                <>
+                  <div className="mt-3">
+                    <label htmlFor="type" className="form-label">
+                      Select Type
+                    </label>
+                    <select
+                      className="form-select"
+                      id="type"
+                      value={type}
+                      onChange={handleTypeChange}
+                    >
+                      <option value="hotels">Hotels</option>
+                      <option value="restaurants">Restaurants</option>
+                      <option value="attractions">Attractions</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleEnjoyJourneyClick}
+                    className="btn mx-2 btn-outline-primary btn-block mt-2"
+                  >
+                    Enjoy Journey..
+                  </button>
+                </>
               )}
             </form>
-            {whetherData && (
+            {weatherData && (
               <div className="mt-4">
                 <h2 className="text-center mb-4">Weather Report</h2>
                 <div className="weather-info-container bg-dark border rounded p-4 shadow-sm">
                   <div className="weather-condition text-center">
                     <h3 className="mb-3">
-                      {whetherData.current.condition.text}
+                      {weatherData.current.condition.text}
                     </h3>
                     <img
-                      src={whetherData.current.condition.icon}
+                      src={weatherData.current.condition.icon}
                       alt="Weather Icon"
                       className="weather-icon"
                     />
                   </div>
                   <div className="weather-details">
                     <p className="mb-2">
-                      <strong>Temperature:</strong> {whetherData.current.temp_c}{" "}
+                      <strong>Temperature:</strong> {weatherData.current.temp_c}{" "}
                       °C
                     </p>
                     <p className="mb-2">
-                      <strong>Humidity:</strong> {whetherData.current.humidity}{" "}
+                      <strong>Humidity:</strong> {weatherData.current.humidity}{" "}
                       %
                     </p>
                   </div>
